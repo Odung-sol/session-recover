@@ -1,0 +1,18 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "session-recover"
+version = "0.1.0"
+description = "Local conversation context recovery for Codex sessions used in Codex and Orca"
+readme = "README.md"
+requires-python = ">=3.10"
+license = {text = "MIT"}
+dependencies = []
+
+[project.scripts]
+session-recover = "session_recover:main"
+
+[tool.setuptools]
+py-modules = ["session_recover"]

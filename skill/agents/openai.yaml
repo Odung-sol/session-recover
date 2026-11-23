@@ -1,0 +1,6 @@
+interface:
+  display_name: "Session Recovery"
+  short_description: "Recover Codex and Orca conversation context locally"
+  default_prompt: "Use $session-recovery to recover this project's last working context."
+policy:
+  allow_implicit_invocation: true
