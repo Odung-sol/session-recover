@@ -6,10 +6,9 @@ It finds the actual conversation by session ID, links it to Orca terminal histor
 
 No API key, model call, network request, or third-party runtime dependency is required. Python 3.10+ and Git. The Orca adapter currently targets macOS's local Codex terminal sessions, not every Orca provider or profile.
 
-## Orca restore button (0.2 preview)
+## Orca restore button (0.2)
 
-The plugin adds **전체 대화 복구** to Orca's status bar. Its implementation is ready
-for approval and live validation; it is not yet a verified release.
+The plugin adds **전체 대화 복구** to Orca's bottom status bar.
 
 ```sh
 orca plugin install https://github.com/Odung-sol/session-recover --ref main --json
@@ -20,29 +19,51 @@ rerun the printed command with that fingerprint. A normal install copies the
 plugin into Orca's durable installation directory. Do not use a development
 folder under `/tmp`: macOS can remove it after a restart.
 
-The button opens workspaces and saved panes, remembers the Codex session IDs Orca
-reports, and uses Orca's native `agent.resume` to reopen tracked conversations.
-The same operation covers connected remote workspaces, including a paired UTM
-host. Concurrent clicks share one run. A deliberately closed tracked pane is
-removed from the recovery list. Reopening an exited agent may create a new
-recovery tab; its returned identity replaces the old one in the private list.
-Orca decides whether a session already runs and returns `started: false` when it
-does. Successful submission is reported as a resume request, not proof of an
-agent's readiness. Login, hook review and another app's conversation lock still
-require attention in the affected tab.
+The button reads saved terminal metadata from the default macOS profile's SQLite
+state, wakes workspaces that still have saved panes, and checks their live
+terminals. It tracks stable PTY IDs rather than handles that change after restart.
+Paired remote hosts are queried separately through Orca's CLI, including UTM.
+Running agents are left running; the button does not rely on `agent.resume`
+being idempotent. Empty workspaces are skipped, so they do not gain blank tabs.
 
-The plugin runs a Node worker on the user's machine. It requests workspace list
-and navigation access, agent metadata and resume access, and private storage.
-Orca bundles some additional workspace actions into `workspace:write`; this code
-uses only open/focus. It never sends terminal text or task prompts, executes shell
-commands, kills processes, or reads secrets or conversation messages.
+A saved Codex conversation whose process exited can be reopened in a recovery
+tab. Local sessions use Orca's native resume API; paired hosts use Orca's CLI to
+create a new terminal running only `codex resume <validated UUID>`. The original
+tab is not closed. This can leave an old shell tab alongside the recovered one.
+The returned stable identity is saved for the next click. Deliberately closed
+panes are not recreated. Concurrent clicks share one run. A resume request is
+journaled before launch; if its result is uncertain, subsequent clicks report
+that uncertainty instead of blindly launching another copy.
 
-For older tabs whose session IDs Orca has lost, an optional private bootstrap
-list can be placed at `~/.local/share/session-recover/orca-targets.json`, mode 600.
-Use an array of objects containing `agent` (`codex`), `sessionId` (the verified
-Codex UUID), `terminalId` (from Orca), `workspacePath`, `hostId` and optional `title`.
-This list is imported only when the plugin has no saved list. Do not put it in a
-public repository. Never guess IDs from titles or import all historical chats.
+The result distinguishes detected processes from accepted resume requests.
+Neither guarantees the conversation is ready for input: login, hook review,
+working-directory choice and another app's conversation lock can need attention
+in that tab. The tool never forces an application lock or sends task prompts.
+
+Supported button environment: macOS, `/Applications/Orca.app`, default
+`local-default` profile, Orca 1.4.269 or newer with the current SQLite parts schema,
+and saved local or paired-host Codex terminal sessions. Other providers' live
+panes can be shown, but their exited agents and arbitrary shell jobs are not
+restarted. Deleted conversation files cannot be reconstructed by this button.
+A changed database schema or unavailable host is reported rather than guessed.
+The current validation covers running local and paired-host sessions; a full
+Mac reboot has not been performed as part of the validation.
+
+The plugin runs a trusted Node worker under the user's account. It requests
+workspace navigation, agent metadata/resume access and private storage. It uses
+Orca's bundled CLI and macOS's read-only `sqlite3` command in addition to the
+plugin API. It reads saved tab/session metadata, not transcript files or secrets,
+and never modifies Orca's database directly. Only private recovery metadata is
+stored. Orca's permission bundles include more workspace actions than this tool
+uses; review the installation prompt.
+
+An optional private bootstrap list can be placed at
+`~/.local/share/session-recover/orca-targets.json`, mode 600, for tabs whose saved
+session association is missing. Use an array of objects containing `agent`
+(`codex`), `sessionId` (verified Codex UUID), `terminalId` (stable `ptyId` from
+Orca's CLI), `workspacePath`, `hostId` and optional `title`. It is imported only
+when the plugin has no saved list. Never put it in a public repository or guess
+IDs from titles. New saved Codex tab metadata is discovered on each click.
 
 ## Install the context command
 
@@ -94,8 +115,9 @@ Snapshots contain private conversation excerpts. They use private file permissio
 ## 한국어
 
 오르카 버튼은 `전체 대화 복구`입니다. 저장된 탭을 열고, 등록된 Codex 대화가
-종료됐으면 오르카의 재개 기능으로 다시 엽니다. 임시 폴더에 연결하는 방식은
-사용하지 않습니다. 0.2는 현재 승인과 실제 앱 검증을 기다리는 버전입니다.
+종료됐으면 저장된 대화 번호로 다시 엽니다. 임시 폴더에 연결하는 방식은
+사용하지 않습니다. 로컬과 연결된 원격 호스트를 함께 확인하며, 실행 중인 대화는
+다시 시작하지 않습니다. 종료된 대화는 별도 복구 탭으로 열릴 수 있습니다.
 로그인·hook 확인·다른 앱의 대화 잠금은 자동으로 넘기지 않습니다.
 
 

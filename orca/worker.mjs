@@ -1,3 +1,4 @@
+import { createAdapter } from './adapter.mjs';
 import { readFile } from 'node:fs/promises';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
@@ -21,11 +22,11 @@ export default function activate(orca) {
   const run = singleFlight(async () => {
     await call('statusBar.update', { id: 'restore-all', text: '대화 복구 중…', tone: 'accent' });
     try {
-      const stored = await orca.storage.get('targets-v1');
+      const stored = await orca.storage.get('targets-v3');
       // A saved empty list means the user closed all tracked panes: do not reseed it.
       const targets = stored == null ? mergeTargets(await seedTargets()) : mergeTargets(stored);
-      const result = await restoreAll(call, targets);
-      await orca.storage.set('targets-v1', result.targets);
+      const result = await restoreAll(createAdapter(call), targets, rows => orca.storage.set('targets-v3', rows));
+      await orca.storage.set('targets-v3', result.targets);
       const message = describe(result);
       await call('statusBar.update', { id: 'restore-all', text: '전체 대화 복구',
         tone: result.errors.length ? 'warning' : 'success', tooltip: message });
