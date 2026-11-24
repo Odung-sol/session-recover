@@ -1,0 +1,18 @@
+{
+  "manifestVersion": 2,
+  "execution": "trusted-worker",
+  "id": "session-recover",
+  "name": "전체 대화 복구",
+  "version": "0.2.0",
+  "description": "저장된 Orca 터미널과 종료된 Codex 대화를 한 번에 다시 엽니다.",
+  "author": {"name": "신준", "url": "https://github.com/Odung-sol"},
+  "repository": "https://github.com/Odung-sol/session-recover",
+  "license": "MIT",
+  "engines": {"orca": ">=1.4.269"},
+  "main": "orca/worker.mjs",
+  "capabilities": [{"kind":"workspace:read"},{"kind":"workspace:write"},{"kind":"agent:read"},{"kind":"agent:launch"},{"kind":"storage:own"}],
+  "contributes": {
+    "commands": [{"id":"restore-all","title":"전체 대화 복구","when":"global"}],
+    "statusBarItems": [{"id":"restore-all","text":"전체 대화 복구","icon":"refresh","tooltip":"저장된 대화 다시 열기","command":"restore-all"}]
+  }
+}

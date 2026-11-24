@@ -16,7 +16,7 @@ import subprocess
 import sys
 import tempfile
 
-VERSION = "0.1.0"
+VERSION = "0.2.0"
 UUID = re.compile(r"\b[0-9a-f]{8}-(?:[0-9a-f]{4}-){3}[0-9a-f]{12}\b", re.I)
 MAX_LINE = 4 * 1024 * 1024
 MAX_TAIL = 12 * 1024 * 1024

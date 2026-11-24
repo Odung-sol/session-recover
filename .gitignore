@@ -11,3 +11,6 @@ latest.md
 *.sqlite*
 *.db*
 .env*
+.orca/
+node_modules/
+orca-targets.json
